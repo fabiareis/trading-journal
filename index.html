@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal Pro - Seu Diário de Trading Profissional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-chart-line"></i>
+                Trading Journal Pro
+            </a>
+            <div class="nav-buttons">
+                <a href="login.html" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </a>
+                <a href="register.html" class="btn btn-register">
+                    <i class="fas fa-user-plus"></i>
+                    Registrar
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Transforme suas Operações em Resultados</h1>
+                <p>O diário de trading mais completo para traders profissionais. Analise, aprenda e melhore seus resultados com ferramentas poderosas de análise e gestão.</p>
+                <a href="register.html" class="btn btn-register">
+                    <i class="fas fa-rocket"></i>
+                    Comece Agora - É Grátis!
+                </a>
+            </div>
+            <div class="hero-image">
+                <img src="dashboard-preview.png" alt="Dashboard Preview" class="dashboard-preview">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-container">
+            <div class="section-title">
+                <h2>Recursos Exclusivos</h2>
+                <p>Tudo que você precisa para se tornar um trader melhor</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Análise Detalhada</h3>
+                    <p>Acompanhe seus resultados com gráficos e estatísticas avançadas em tempo real</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Gestão de Risco</h3>
+                    <p>Controle seu risco e maximize seus lucros com nossa calculadora integrada</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3>Análise Comportamental</h3>
+                    <p>Identifique padrões em suas operações e melhore sua psicologia</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Acompanhamento em Tempo Real</h3>
+                    <p>Monitore seu desempenho e metas com atualizações instantâneas</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-export"></i>
+                    </div>
+                    <h3>Relatórios Detalhados</h3>
+                    <p>Exporte seus dados e análises em diversos formatos</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Acesso em Qualquer Lugar</h3>
+                    <p>Use em qualquer dispositivo com nossa interface responsiva</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-container">
+            <h2>Pronto para Melhorar seus Resultados?</h2>
+            <p>Junte-se a milhares de traders que já estão transformando sua forma de operar</p>
+            <a href="register.html" class="btn btn-register">
+                <i class="fas fa-rocket"></i>
+                Criar Conta Gratuita
+            </a>
+        </div>
+    </section>
+
+    <script>
+        // Adiciona classe ao header quando rolar a página
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('.header');
+            header.classList.toggle('scrolled', window.scrollY > 0);
+        });
+
+        // Animação suave ao clicar nos links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

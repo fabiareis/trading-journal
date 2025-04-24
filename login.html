@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Trading Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --primary-dark: #1976D2;
+            --error-color: #f44336;
+            --success-color: #4CAF50;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 400px;
+            margin: 1rem;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .message {
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            display: none;
+        }
+
+        .message.error {
+            background-color: #ffebee;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        .message.success {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .register-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Trading Dashboard</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Nome de Usuário</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="message" class="message"></div>
+        <div class="register-link">
+            <p>Não tem uma conta? <a href="register.html">Registre-se</a></p>
+        </div>
+    </div>
+
+    <script src="users.js"></script>
+    <script>
+        // Initialize UserManager
+        const userManager = new UserManager();
+
+        // Check if user is already logged in
+        if (userManager.isLoggedIn()) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Get DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+
+        // Show message function
+        function showMessage(message, isError = false) {
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${isError ? 'error' : 'success'}`;
+            messageDiv.style.display = 'block';
+        }
+
+        // Handle form submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Validate inputs
+            if (!username || !password) {
+                showMessage('Por favor, preencha todos os campos', true);
+                return;
+            }
+
+            // Attempt login
+            const result = userManager.loginUser(username, password);
+
+            if (result.success) {
+                showMessage(result.message);
+                // Redirect to dashboard after successful login
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                showMessage(result.message, true);
+            }
+        });
+    </script>
+</body>
+</html> 

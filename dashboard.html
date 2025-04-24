@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+    <style>
+        #main-content {
+            display: block;
+            width: 100%;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: block;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            margin: 0;
+        }
+        #dashboard-container {
+            display: block;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+        select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-content">
+        <header>
+            <h1>📊 Dashboard de Operações: Conta Pessoal vs Mesa Proprietária</h1>
+        </header>
+
+        <div class="container">
+            <!-- Seletor de Modo -->
+            <div class="mode-selector">
+                <select id="modeSelect" onchange="switchMode()">
+                    <option value="personal">Conta Pessoal</option>
+                    <option value="prop">Mesa Proprietária</option>
+                </select>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-button active" data-tab="overview">Visão Geral</button>
+                <button class="tab-button" data-tab="evolution">Evolução</button>
+            </div>
+
+            <div id="overview" class="tab-content active">
+                <div class="dashboard-grid">
+                    <div class="metric-card">
+                        <h3>Capital Disponível</h3>
+                        <div class="value" id="availableCapital">R$ 0,00</div>
+                        <div class="period-results">
+                            <span id="dailyChange">Hoje: R$ 0,00</span>
+                            <span id="weeklyChange">Semana: R$ 0,00</span>
+                            <span id="monthlyChange">Mês: R$ 0,00</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Resultado Total</h3>
+                        <div class="value" id="totalResult">R$ 0,00</div>
+                        <div class="status-message" id="statusMessage">Status</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3>Taxa de Acerto</h3>
+                        <div class="value" id="winRate">0%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <h3 id="lastMetricTitle">Valor que Falta para o Teste</h3>
+                        <div class="value" id="avgResult">R$ 0,00</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Registrar Operação</h2>
+                    <form id="tradeForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="date">Data</label>
+                                <input type="date" id="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="asset">Ativo</label>
+                                <select id="asset" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="WDO">WDO</option>
+                                    <option value="WIN">WIN</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="operationType">Tipo de Operação</label>
+                                <select id="operationType" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="buy">Compra</option>
+                                    <option value="sell">Venda</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="analysisType">Tipo de Análise</label>
+                                <select id="analysisType" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="auction">Leilão</option>
+                                    <option value="opening">Abertura</option>
+                                    <option value="exhaustion">Cansaço de movimento</option>
+                                    <option value="test">Teste</option>
+                                    <option value="moving_averages">Cruzamento de médias</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="contracts">Contratos</label>
+                                <input type="number" id="contracts" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryPrice">Preço de Entrada</label>
+                                <input type="number" id="entryPrice" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="exitPrice">Preço de Saída</label>
+                                <input type="number" id="exitPrice" step="0.01" required>
+                            </div>
+                            <!-- Campos específicos por modo -->
+                            <div id="personalFields" class="mode-fields" style="display: none;">
+                                <div class="form-group">
+                                    <label for="capital">Capital Disponível</label>
+                                    <input type="number" id="capital" value="10000" required>
+                                </div>
+                            </div>
+                            <div id="propFields" class="mode-fields">
+                                <div class="form-group">
+                                    <label for="propCapital">Meta para Aprovação</label>
+                                    <input type="number" id="propCapital" value="5000" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="operationNotes">Observações</label>
+                                <textarea id="operationNotes" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" class="primary">Registrar Operação</button>
+                            <button type="button" class="secondary" id="generateReport">Gerar Relatório</button>
+                            <button type="button" class="secondary" onclick="clearStorage()">Limpar Dados</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-grid">
+                        <div class="form-group">
+                            <label for="startDate">Data Inicial</label>
+                            <input type="date" id="startDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">Data Final</label>
+                            <input type="date" id="endDate">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="primary" id="applyFilters">Aplicar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nova seção de análise de preços -->
+                <div class="price-analysis-section" style="margin: 20px 0; padding: 20px; background-color: #f5f5f5; border-radius: 8px;">
+                    <h3>Análise de Região de Preço</h3>
+                    <div style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div class="form-group">
+                            <label for="priceSearch">Preço</label>
+                            <input type="number" id="priceSearch" step="0.01" placeholder="Ex: 5711.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="assetSearch">Ativo</label>
+                            <input type="text" id="assetSearch" placeholder="Ex: WDO">
+                        </div>
+                        <button type="button" class="primary" onclick="analyzePriceRegion()">Analisar</button>
+                    </div>
+                    <div id="priceAnalysisResult" style="margin-top: 15px; padding: 15px; border-radius: 4px;"></div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th>Data</th>
+                            <th>Modo</th>
+                            <th>Ativo</th>
+                            <th>Tipo</th>
+                            <th>Análise</th>
+                            <th>Contratos</th>
+                            <th>Entrada</th>
+                            <th>Saída</th>
+                            <th>Resultado</th>
+                            <th>Capital</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="evolution" class="tab-content">
+                <div class="evolution-grid">
+                    <canvas id="resultChart"></canvas>
+                    <canvas id="equityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let trades = [];
+
+        // Variáveis globais para os gráficos
+        window.resultChart = null;
+        window.equityChart = null;
+
+        function getFilteredTrades() {
+            try {
+                const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const mode = document.getElementById('modeSelect').value;
+
+                // Se não houver datas selecionadas, retornar todas as operações do modo atual
+                if (!startDate && !endDate) {
+                    return trades.filter(trade => trade.mode === mode);
+                }
+
+                // Se houver datas, aplicar o filtro
+                return trades.filter(trade => {
+                    const modeMatch = trade.mode === mode;
+                    const tradeDate = new Date(trade.date);
+                    const isAfterStart = !startDate || tradeDate >= new Date(startDate);
+                    const isBeforeEnd = !endDate || tradeDate <= new Date(endDate);
+
+                    return modeMatch && isAfterStart && isBeforeEnd;
+                });
+            } catch (error) {
+                console.error('Erro ao filtrar trades:', error);
+                return [];
+            }
+        }
+
+        function deleteTrade(index) {
+            try {
+                if (confirm('Tem certeza que deseja apagar esta operação?')) {
+                    // Carregar trades atuais
+                    let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                    
+                    // Remover o trade pelo índice
+                    trades.splice(index, 1);
+                    
+                    // Salvar trades atualizados
+                    localStorage.setItem('trades', JSON.stringify(trades));
+                    
+                    // Atualizar interface
+                    updateDashboard();
+                    updateCharts();
+                    updateOperationsTable();
+                    
+                    alert('Operação apagada com sucesso!');
+                }
+            } catch (error) {
+                console.error('Erro ao apagar operação:', error);
+                alert('Erro ao apagar a operação. Por favor, tente novamente.');
+            }
+        }
+
+        function updateOperationsTable() {
+            try {
+                const filteredTrades = getFilteredTrades();
+                const tbody = document.getElementById('tradesTableBody');
+                tbody.innerHTML = '';
+
+                // Remover botões antigos se existirem
+                const oldActionButtons = document.querySelector('.table-actions');
+                if (oldActionButtons) {
+                    oldActionButtons.remove();
+                }
+
+                // Adicionar botões de ação em massa acima da tabela
+                const actionButtons = document.createElement('div');
+                actionButtons.className = 'table-actions';
+                actionButtons.style.margin = '10px 0';
+                actionButtons.innerHTML = `
+                    <button onclick="selectAllTrades()" class="secondary">Selecionar Todos</button>
+                    <button onclick="unselectAllTrades()" class="secondary">Desmarcar Todos</button>
+                    <button onclick="deleteSelectedTrades()" class="delete-button" style="background-color: #ff4444; color: white; padding: 5px 10px; border-radius: 4px;">
+                        Apagar Selecionados
+                    </button>
+                `;
+                tbody.parentElement.parentElement.insertBefore(actionButtons, tbody.parentElement);
+
+                if (filteredTrades.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="13" style="text-align: center;">Nenhuma operação registrada</td>';
+                    tbody.appendChild(row);
+                    return;
+                }
+
+                // Ordenar trades por data (ordem crescente)
+                const sortedTrades = filteredTrades.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                sortedTrades.forEach((trade, index) => {
+                    const row = document.createElement('tr');
+                    
+                    // Calcular pontos
+                    const points = trade.points || (trade.operationType === 'buy' 
+                        ? (trade.exitPrice - trade.entryPrice)
+                        : (trade.entryPrice - trade.exitPrice));
+                    
+                    // Formatar valores
+                    const formattedDate = formatDate(trade.date);
+                    const formattedEntryPrice = formatCurrency(trade.entryPrice);
+                    const formattedExitPrice = formatCurrency(trade.exitPrice);
+                    const formattedResult = formatCurrency(trade.result);
+                    const formattedCapital = formatCurrency(trade.capital);
+                    
+                    // Definir classe para o resultado
+                    const resultClass = points >= 0 ? 'positive' : 'negative';
+                    
+                    row.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="trade-checkbox" data-index="${index}">
+                        </td>
+                        <td style="text-align: center;">${formattedDate}</td>
+                        <td style="text-align: center;">${trade.mode === 'personal' ? 'Conta Pessoal' : 'Mesa Proprietária'}</td>
+                        <td style="text-align: center;">${trade.asset.toUpperCase()}</td>
+                        <td style="text-align: center;">${getOperationTypeName(trade.operationType)}</td>
+                        <td style="text-align: center;">${getAnalysisTypeName(trade.analysisType)}</td>
+                        <td style="text-align: right;">${trade.contracts}</td>
+                        <td style="text-align: right;">${formattedEntryPrice}</td>
+                        <td style="text-align: right;">${formattedExitPrice}</td>
+                        <td class="${resultClass}" style="text-align: right;">
+                            ${formattedResult}
+                            <br>
+                            <small style="color: ${points >= 0 ? 'green' : 'red'}">
+                                ${Math.abs(points)} pts
+                            </small>
+                        </td>
+                        <td style="text-align: right;">${formattedCapital}</td>
+                        <td style="text-align: left;">${trade.operationNotes || ''}</td>
+                        <td style="text-align: center;">
+                            <div style="display: flex; gap: 5px; justify-content: center;">
+                                <button onclick="generateTradePDF(${index})" class="pdf-button" title="Gerar PDF">📄</button>
+                                <button onclick="deleteTrade(${index})" class="delete-button" title="Apagar registro" style="color: red; cursor: pointer;">🗑️</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                console.log('Tabela de operações atualizada com sucesso');
+            } catch (error) {
+                console.error('Erro ao atualizar tabela de operações:', error);
+                alert('Erro ao atualizar a tabela de operações. Por favor, recarregue a página.');
+            }
+        }
+
+        // Funções para manipulação em massa
+        function selectAllTrades() {
+            const checkboxes = document.querySelectorAll('.trade-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = true);
+        }
+
+        function unselectAllTrades() {
+            const checkboxes = document.querySelectorAll('.trade-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+
+        function deleteSelectedTrades() {
+            const checkboxes = document.querySelectorAll('.trade-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Selecione pelo menos uma operação para apagar.');
+                return;
+            }
+
+            if (confirm(`Tem certeza que deseja apagar ${checkboxes.length} operação(ões)?`)) {
+                try {
+                    // Destruir gráficos antes de atualizar
+                    if (window.resultChart) {
+                        window.resultChart.destroy();
+                        window.resultChart = null;
+                    }
+                    if (window.equityChart) {
+                        window.equityChart.destroy();
+                        window.equityChart = null;
+                    }
+
+                    // Carregar todos os trades
+                    let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                    
+                    // Obter os índices dos trades selecionados
+                    const indexesToDelete = Array.from(checkboxes)
+                        .map(cb => parseInt(cb.getAttribute('data-index')))
+                        .sort((a, b) => b - a);
+
+                    // Remover os trades selecionados
+                    indexesToDelete.forEach(index => {
+                        trades.splice(index, 1);
+                    });
+
+                    // Salvar os trades atualizados
+                    localStorage.setItem('trades', JSON.stringify(trades));
+                    
+                    // Atualizar a interface
+                    updateOperationsTable();
+                    updateDashboard();
+                    updateCharts();
+                    
+                    alert('Operações selecionadas foram apagadas com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao apagar operações:', error);
+                    alert('Erro ao apagar as operações. Por favor, tente novamente.');
+                }
+            }
+        }
+
+        function updateCharts() {
+            const filteredTrades = getFilteredTrades();
+
+            // Se não houver trades, criar gráficos vazios
+            if (!filteredTrades || filteredTrades.length === 0) {
+                createEmptyCharts();
+                return;
+            }
+
+            // Destruir gráficos existentes
+            if (window.resultChart) {
+                window.resultChart.destroy();
+                window.resultChart = null;
+            }
+            if (window.equityChart) {
+                window.equityChart.destroy();
+                window.equityChart = null;
+            }
+
+            // Criar gráfico de resultados
+            const resultCtx = document.getElementById('resultChart').getContext('2d');
+            window.resultChart = new Chart(resultCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredTrades.map(t => formatDate(t.date)),
+                    datasets: [{
+                        label: 'Resultado por Operação',
+                        data: filteredTrades.map(t => t.result),
+                        backgroundColor: filteredTrades.map(t => t.result >= 0 ? '#4CAF50' : '#f44336')
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Criar gráfico de equity
+            const equityCtx = document.getElementById('equityChart').getContext('2d');
+            const equity = filteredTrades.reduce((acc, trade) => {
+                const lastValue = acc.length > 0 ? acc[acc.length - 1] : trade.capital;
+                acc.push(lastValue + trade.result);
+                return acc;
+            }, [filteredTrades[0]?.capital || 0]);
+
+            window.equityChart = new Chart(equityCtx, {
+                type: 'line',
+                data: {
+                    labels: filteredTrades.map(t => formatDate(t.date)),
+                    datasets: [{
+                        label: 'Evolução do Capital',
+                        data: equity,
+                        borderColor: '#2196F3',
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            // Remover classe active de todas as tabs e conteúdos
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Adicionar classe active na tab selecionada
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(tab).classList.add('active');
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('pt-BR');
+        }
+
+        function getOperationTypeName(type) {
+            return type === 'buy' ? 'Compra' : 'Venda';
+        }
+
+        function getAnalysisTypeName(type) {
+            const types = {
+                'auction': 'Leilão',
+                'opening': 'Abertura',
+                'exhaustion': 'Cansaço de movimento',
+                'test': 'Teste',
+                'moving_averages': 'Cruzamento de médias'
+            };
+            return types[type] || type;
+        }
+
+        function getMotivationalMessage(points, isProfit) {
+            points = Math.abs(points); // Converter para número positivo para a mensagem
+            
+            if (isProfit) {
+                if (points >= 20) return `🌟 EXTRAORDINÁRIO! Você fez ${points} pontos! Continue assim!`;
+                if (points >= 10) return `🎯 EXCELENTE! Você conquistou ${points} pontos!`;
+                if (points >= 5) return `✨ Muito bem! Você fez ${points} pontos!`;
+                return `👍 Boa! Você fez ${points} pontos!`;
+            } else {
+                if (points >= 20) return `😔 Ops! Você perdeu ${points} pontos. Respire, analise e volte mais forte!`;
+                if (points >= 10) return `⚠️ Atenção! Perda de ${points} pontos. Revise sua estratégia!`;
+                if (points >= 5) return `📊 Você perdeu ${points} pontos. Mantenha o foco!`;
+                return `⚡ Perda de ${points} pontos. Continue tentando!`;
+            }
+        }
+
+        function updateDashboard() {
+            try {
+                const mode = document.getElementById('modeSelect').value;
+                const propCapital = parseFloat(document.getElementById('propCapital').value) || 5000;
+                
+                // Atualizar título e valor do capital baseado no modo
+                if (mode === 'prop') {
+                    document.querySelector('.metric-card:first-child h3').textContent = 'Capital Disponível';
+                    document.getElementById('availableCapital').textContent = formatCurrency(propCapital);
+                    document.getElementById('availableCapital').style.color = 'black';
+                    document.getElementById('lastMetricTitle').textContent = 'Valor que Falta para o Teste';
+                } else {
+                    document.querySelector('.metric-card:first-child h3').textContent = 'Capital Disponível';
+                    document.getElementById('availableCapital').textContent = formatCurrency(parseFloat(document.getElementById('capital').value) || 10000);
+                    document.getElementById('availableCapital').style.color = 'black';
+                    document.getElementById('lastMetricTitle').textContent = 'Média por Operação';
+                }
+
+                // Carregar todas as operações
+                const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                const filteredTrades = trades.filter(trade => trade.mode === mode);
+                
+                // Se não houver operações, mostrar valores zerados
+                if (!filteredTrades || filteredTrades.length === 0) {
+                    document.getElementById('totalResult').textContent = 'R$ 0,00';
+                    document.getElementById('totalResult').style.color = 'black';
+                    document.getElementById('winRate').textContent = '0,00%';
+                    document.getElementById('winRate').style.color = 'black';
+                    document.getElementById('dailyChange').textContent = 'Hoje: R$ 0,00';
+                    document.getElementById('dailyChange').style.color = 'black';
+                    document.getElementById('weeklyChange').textContent = 'Semana: R$ 0,00';
+                    document.getElementById('weeklyChange').style.color = 'black';
+                    document.getElementById('monthlyChange').textContent = 'Mês: R$ 0,00';
+                    document.getElementById('monthlyChange').style.color = 'black';
+                    document.getElementById('statusMessage').textContent = 'Nenhuma operação registrada';
+                    document.getElementById('statusMessage').style.color = 'black';
+
+                    if (mode === 'prop') {
+                        document.getElementById('avgResult').textContent = formatCurrency(propCapital);
+                        document.getElementById('avgResult').style.color = 'black';
+                    } else {
+                        document.getElementById('avgResult').textContent = 'R$ 0,00';
+                        document.getElementById('avgResult').style.color = 'black';
+                    }
+                    return;
+                }
+
+                // Calcular resultados
+                const currentDate = new Date();
+                const today = new Date().toISOString().split('T')[0];
+                const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay())).toISOString().split('T')[0];
+                const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
+
+                const totalResult = filteredTrades.reduce((sum, trade) => sum + (trade.result || 0), 0);
+                const monthlyResult = filteredTrades.filter(trade => trade.date >= startOfMonth).reduce((sum, trade) => sum + (trade.result || 0), 0);
+                const weeklyResult = filteredTrades.filter(trade => trade.date >= startOfWeek).reduce((sum, trade) => sum + (trade.result || 0), 0);
+                const dailyResult = filteredTrades.filter(trade => trade.date === today).reduce((sum, trade) => sum + (trade.result || 0), 0);
+
+                const totalTrades = filteredTrades.length;
+                const winningTrades = filteredTrades.filter(trade => trade.result > 0).length;
+                const winRate = ((winningTrades / totalTrades) * 100).toFixed(2);
+
+                // Atualizar valores no dashboard
+                document.getElementById('totalResult').textContent = formatCurrency(totalResult);
+                document.getElementById('totalResult').style.color = totalResult >= 0 ? 'green' : 'red';
+                
+                document.getElementById('winRate').textContent = `${winRate}%`;
+                document.getElementById('winRate').style.color = parseFloat(winRate) >= 50 ? 'green' : 'red';
+
+                document.getElementById('dailyChange').textContent = `Hoje: ${formatCurrency(dailyResult)}`;
+                document.getElementById('dailyChange').style.color = dailyResult >= 0 ? 'green' : 'red';
+                
+                document.getElementById('weeklyChange').textContent = `Semana: ${formatCurrency(weeklyResult)}`;
+                document.getElementById('weeklyChange').style.color = weeklyResult >= 0 ? 'green' : 'red';
+                
+                document.getElementById('monthlyChange').textContent = `Mês: ${formatCurrency(monthlyResult)}`;
+                document.getElementById('monthlyChange').style.color = monthlyResult >= 0 ? 'green' : 'red';
+
+                // Atualizar valor que falta para o teste ou média por operação
+                if (mode === 'prop') {
+                    const valorQueFalta = propCapital - monthlyResult;
+                    document.getElementById('avgResult').textContent = formatCurrency(valorQueFalta);
+                    document.getElementById('avgResult').style.color = monthlyResult >= 0 ? 'green' : 'red';
+
+                    // Verificar status do teste
+                    if (monthlyResult >= propCapital) {
+                        document.getElementById('statusMessage').textContent = 'PARABÉNS! TUDO INDICA QUE VOCÊ PASSOU NO SEU TESTE!';
+                        document.getElementById('statusMessage').style.color = 'green';
+                    } else if (monthlyResult <= -propCapital) {
+                        document.getElementById('statusMessage').textContent = 'POXA, AO QUE PARECE VOCÊ ATINGIU O LOSS GLOBAL DO SEU TESTE.';
+                        document.getElementById('statusMessage').style.color = 'red';
+                    } else {
+                        document.getElementById('statusMessage').textContent = monthlyResult >= 0 ? '🎯 Você está lucrando!' : '⚠️ Atenção aos resultados!';
+                        document.getElementById('statusMessage').style.color = monthlyResult >= 0 ? 'green' : 'red';
+                    }
+                } else {
+                    const avgResult = totalTrades > 0 ? (totalResult / totalTrades) : 0;
+                    document.getElementById('avgResult').textContent = formatCurrency(avgResult);
+                    document.getElementById('avgResult').style.color = avgResult >= 0 ? 'green' : 'red';
+                    
+                    document.getElementById('statusMessage').textContent = totalResult >= 0 ? '🎯 Você está lucrando!' : '⚠️ Atenção aos resultados!';
+                    document.getElementById('statusMessage').style.color = totalResult >= 0 ? 'green' : 'red';
+                }
+
+                // Atualizar gráficos
+                updateCharts();
+
+            } catch (error) {
+                console.error('Erro ao atualizar dashboard:', error);
+            }
+        }
+
+        function handleTradeSubmit(e) {
+            if (e) e.preventDefault();
+            
+            try {
+                const mode = document.getElementById('modeSelect').value;
+                const date = document.getElementById('date').value;
+                const asset = document.getElementById('asset').value;
+                const operationType = document.getElementById('operationType').value;
+                const analysisType = document.getElementById('analysisType').value;
+                const contracts = parseInt(document.getElementById('contracts').value);
+                const entryPrice = parseFloat(document.getElementById('entryPrice').value);
+                const exitPrice = parseFloat(document.getElementById('exitPrice').value);
+                const operationNotes = document.getElementById('operationNotes').value;
+
+                // Validações básicas
+                if (!date || !asset || !operationType || !analysisType) {
+                    alert('Por favor, preencha todos os campos obrigatórios.');
+                    return false;
+                }
+
+                if (!contracts || !entryPrice || !exitPrice || contracts <= 0 || entryPrice <= 0 || exitPrice <= 0) {
+                    alert('Por favor, insira valores válidos para contratos e preços.');
+                    return false;
+                }
+
+                // Criar objeto trade
+                const trade = {
+                    date: date,
+                    mode: mode,
+                    asset: asset.toUpperCase(),
+                    operationType: operationType,
+                    analysisType: analysisType,
+                    contracts: contracts,
+                    entryPrice: entryPrice,
+                    exitPrice: exitPrice,
+                    operationNotes: operationNotes
+                };
+
+                // Calcular pontos e resultado
+                const points = trade.operationType === 'buy' 
+                    ? (trade.exitPrice - trade.entryPrice)
+                    : (trade.entryPrice - trade.exitPrice);
+                
+                trade.result = points * trade.contracts * 10;
+                trade.points = points;
+
+                // Adicionar dados do modo
+                if (mode === 'personal') {
+                    trade.capital = parseFloat(document.getElementById('capital').value) || 10000;
+                } else {
+                    trade.capital = parseFloat(document.getElementById('propCapital').value) || 5000;
+                }
+
+                // Salvar a operação
+                let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                trades.push(trade);
+                localStorage.setItem('trades', JSON.stringify(trades));
+
+                // Atualizar interface
+                updateOperationsTable();
+                updateDashboard();
+                updateCharts();
+
+                // Limpar formulário manualmente
+                document.getElementById('date').valueAsDate = new Date();
+                document.getElementById('asset').value = '';
+                document.getElementById('operationType').value = '';
+                document.getElementById('analysisType').value = '';
+                document.getElementById('contracts').value = '';
+                document.getElementById('entryPrice').value = '';
+                document.getElementById('exitPrice').value = '';
+                document.getElementById('operationNotes').value = '';
+
+                // Manter valores do modo atual
+                if (mode === 'prop') {
+                    document.getElementById('propCapital').value = trade.capital;
+                }
+
+                // Mensagem de sucesso
+                const isProfit = trade.result > 0;
+                const message = getMotivationalMessage(Math.abs(points), isProfit);
+                alert(message);
+
+                return false;
+            } catch (error) {
+                console.error('Erro ao registrar:', error);
+                alert('Erro ao registrar. Verifique o console para detalhes.');
+                return false;
+            }
+        }
+
+        function setupEventListeners() {
+            const tradeForm = document.getElementById('tradeForm');
+            
+            // Remover event listeners existentes
+            const newTradeForm = tradeForm.cloneNode(true);
+            tradeForm.parentNode.replaceChild(newTradeForm, tradeForm);
+            
+            // Adicionar novo event listener
+            newTradeForm.addEventListener('submit', handleTradeSubmit);
+
+            // Event listener para o botão de aplicar filtros
+            document.getElementById('applyFilters').addEventListener('click', function() {
+                updateOperationsTable();
+                updateDashboard();
+                updateCharts();
+            });
+
+            // Event listeners para as tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tab = this.dataset.tab;
+                    switchTab(tab);
+                    if (tab === 'evolution') {
+                        updateCharts();
+                    }
+                });
+            });
+
+            // Event listener para mudança de modo
+            document.getElementById('modeSelect').addEventListener('change', function() {
+                const mode = this.value;
+                document.getElementById('personalFields').style.display = mode === 'personal' ? 'block' : 'none';
+                document.getElementById('propFields').style.display = mode === 'prop' ? 'block' : 'none';
+                
+                // Atualizar capital disponível ao mudar o modo
+                if (mode === 'prop') {
+                    const propCapital = parseFloat(document.getElementById('propCapital').value) || 5000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(propCapital);
+                } else {
+                    const personalCapital = parseFloat(document.getElementById('capital').value) || 10000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(personalCapital);
+                }
+                
+                updateDashboard();
+                updateOperationsTable();
+                updateCharts();
+            });
+
+            // Adicionar event listener direto para o capital pessoal
+            document.getElementById('capital').addEventListener('input', function() {
+                if (document.getElementById('modeSelect').value === 'personal') {
+                    const value = parseFloat(this.value) || 10000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(value);
+                }
+            });
+
+            // Adicionar event listener direto para o propCapital
+            document.getElementById('propCapital').addEventListener('input', function() {
+                if (document.getElementById('modeSelect').value === 'prop') {
+                    const value = parseFloat(this.value) || 5000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(value);
+                }
+            });
+
+            // Adicionar listener para o botão de apagar selecionados
+            document.querySelector('.table-actions .delete-button').addEventListener('click', function() {
+                resetMessages();
+            });
+        }
+
+        // Inicializar o dashboard quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando dashboard...');
+            
+            // Forçar modo proprietário como padrão
+            document.getElementById('modeSelect').value = 'prop';
+            
+            // Esconder campos pessoais e mostrar campos proprietários
+            document.getElementById('personalFields').style.display = 'none';
+            document.getElementById('propFields').style.display = 'block';
+            
+            // Definir valores iniciais
+            const propCapital = document.getElementById('propCapital').value || '5000';
+            document.getElementById('propCapital').value = propCapital;
+            document.getElementById('availableCapital').textContent = formatCurrency(parseFloat(propCapital));
+            
+            // Adicionar event listener direto para o propCapital
+            document.getElementById('propCapital').addEventListener('input', function() {
+                if (document.getElementById('modeSelect').value === 'prop') {
+                    const value = parseFloat(this.value) || 5000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(value);
+                }
+            });
+
+            // Adicionar event listener direto para o capital pessoal
+            document.getElementById('capital').addEventListener('input', function() {
+                if (document.getElementById('modeSelect').value === 'personal') {
+                    const value = parseFloat(this.value) || 10000;
+                    document.getElementById('availableCapital').textContent = formatCurrency(value);
+                }
+            });
+            
+            // Configurar event listeners
+            setupEventListeners();
+            
+            // Criar gráficos vazios
+            createEmptyCharts();
+            
+            // Forçar atualização inicial do dashboard e tabela
+            updateDashboard();
+            updateOperationsTable();
+            updateCharts();
+        });
+
+        function clearStorage() {
+            if (confirm('Isso irá apagar todos os dados salvos. Tem certeza?')) {
+                localStorage.clear();
+                alert('Dados limpos com sucesso! A página será recarregada.');
+                location.reload();
+            }
+        }
+
+        function generateTradePDF(index) {
+            try {
+                // Obter os trades do localStorage
+                const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                const trade = trades[index];
+                
+                if (!trade) {
+                    alert('Operação não encontrada.');
+                    return;
+                }
+
+                // Criar nova instância do jsPDF
+                const doc = new jsPDF();
+                
+                // Configurar fonte e tamanho
+                doc.setFontSize(16);
+                doc.text('Relatório de Operação', 105, 20, { align: 'center' });
+                
+                // Configurar fonte para o conteúdo
+                doc.setFontSize(12);
+                
+                // Adicionar informações da operação
+                const content = [
+                    ['Data', formatDate(trade.date)],
+                    ['Modo', trade.mode === 'personal' ? 'Conta Pessoal' : 'Mesa Proprietária'],
+                    ['Ativo', trade.asset.toUpperCase()],
+                    ['Tipo de Operação', getOperationTypeName(trade.operationType)],
+                    ['Tipo de Análise', getAnalysisTypeName(trade.analysisType)],
+                    ['Contratos', trade.contracts.toString()],
+                    ['Preço de Entrada', formatCurrency(trade.entryPrice)],
+                    ['Preço de Saída', formatCurrency(trade.exitPrice)],
+                    ['Resultado', formatCurrency(trade.result)],
+                    ['Capital', formatCurrency(trade.capital)],
+                    ['Observações', trade.operationNotes || '']
+                ];
+                
+                // Posição inicial
+                let y = 40;
+                
+                // Adicionar cada linha de informação
+                content.forEach(([label, value]) => {
+                    doc.text(`${label}: ${value}`, 20, y);
+                    y += 10;
+                });
+                
+                // Calcular pontos
+                const points = trade.points || (trade.operationType === 'buy' 
+                    ? (trade.exitPrice - trade.entryPrice)
+                    : (trade.entryPrice - trade.exitPrice));
+                    
+                // Adicionar resultado em pontos
+                doc.text(`Resultado em Pontos: ${Math.abs(points)} pts`, 20, y);
+                
+                // Adicionar data e hora de geração do relatório
+                const now = new Date();
+                doc.setFontSize(10);
+                doc.text(`Relatório gerado em: ${now.toLocaleString('pt-BR')}`, 20, 280);
+                
+                // Salvar o PDF
+                const fileName = `operacao_${trade.asset}_${trade.date}.pdf`;
+                doc.save(fileName);
+                
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                alert('Erro ao gerar o PDF. Por favor, tente novamente.');
+            }
+        }
+
+        // Função de análise de preço atualizada
+        function analyzePriceRegion() {
+            try {
+                const price = parseFloat(document.getElementById('priceSearch').value);
+                const asset = document.getElementById('assetSearch').value.toUpperCase();
+                const resultDiv = document.getElementById('priceAnalysisResult');
+
+                if (!price || !asset) {
+                    alert('Por favor, preencha o preço e o ativo para análise.');
+                    return;
+                }
+
+                // Carregar todas as operações
+                const trades = JSON.parse(localStorage.getItem('trades') || '[]');
+                
+                // Filtrar operações pelo ativo e preço exato
+                const exactTrades = trades.filter(trade => 
+                    trade.asset.toUpperCase() === asset && 
+                    trade.entryPrice === price
+                );
+
+                if (exactTrades.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px;">
+                            Nenhuma operação encontrada neste preço exato para o ativo ${asset}.
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Contar operações por tipo
+                const buys = exactTrades.filter(t => t.operationType === 'buy').length;
+                const sells = exactTrades.filter(t => t.operationType === 'sell').length;
+                const total = exactTrades.length;
+
+                // Calcular resultados médios
+                const avgResult = exactTrades.reduce((sum, t) => sum + t.result, 0) / total;
+                
+                // Determinar tendência predominante
+                let tendency = '';
+                let tendencyColor = '';
+                if (buys > sells) {
+                    tendency = `Você teve tendência de COMPRA neste preço (${buys} compras vs ${sells} vendas)`;
+                    tendencyColor = '#4CAF50';
+                } else if (sells > buys) {
+                    tendency = `Você teve tendência de VENDA neste preço (${sells} vendas vs ${buys} compras)`;
+                    tendencyColor = '#f44336';
+                } else if (buys === sells && total > 0) {
+                    tendency = `Você operou igualmente comprado e vendido neste preço (${buys} operações de cada)`;
+                    tendencyColor = '#2196F3';
+                }
+
+                // Calcular resultado total e médio
+                const totalResult = exactTrades.reduce((sum, t) => sum + t.result, 0);
+                const successfulTrades = exactTrades.filter(t => t.result > 0).length;
+                const winRate = ((successfulTrades / total) * 100).toFixed(2);
+
+                // Formatar resultado
+                resultDiv.innerHTML = `
+                    <div style="background-color: #fff; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4 style="color: ${tendencyColor}; margin-bottom: 10px;">${tendency}</h4>
+                        <div style="margin-top: 15px;">
+                            <p><strong>Estatísticas no preço ${formatCurrency(price)}:</strong></p>
+                            <ul style="list-style: none; padding-left: 0; margin-top: 10px;">
+                                <li>📊 Total de operações: ${total}</li>
+                                <li>💰 Resultado total: ${formatCurrency(totalResult)}</li>
+                                <li>📈 Média por operação: ${formatCurrency(avgResult)}</li>
+                                <li>🎯 Taxa de acerto: ${winRate}%</li>
+                                <li>🔄 Distribuição:
+                                    <ul style="list-style: none; padding-left: 20px; margin-top: 5px;">
+                                        <li style="color: #4CAF50;">↗️ Compras: ${buys}</li>
+                                        <li style="color: #f44336;">↘️ Vendas: ${sells}</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Erro na análise de preço:', error);
+                alert('Erro ao analisar o preço. Por favor, tente novamente.');
+            }
+        }
+    </script>
+</body>
+</html> 
